@@ -28,7 +28,7 @@ object Arena {
 
   def `with-n-Machines`(n: Int, publisher: ActorRef)(implicit system: ActorSystem): ActorRef = {
 
-    val machines: Map[Int, ActorRef] = (0 until n).map(i => i -> Machine.ref(i, publisher)).toMap
+    val machines: Map[Int, ActorRef] = (1 to n).map(i => i -> Machine.ref(i, publisher)).toMap
 
     system.actorOf(Props.apply(classOf[Arena], machines))
   }

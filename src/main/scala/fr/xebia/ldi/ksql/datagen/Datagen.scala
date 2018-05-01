@@ -28,7 +28,7 @@ import scala.util.{Failure, Success, Try}
 case class Datagen(props: Properties) {
 
   val topics = Vector(
-    new NewTopic("SELECT-SCREEN", 6, 1)
+    new NewTopic("CLICK-SCREEN", 6, 1)
   )
 
   def topicCreation: Try[CreateTopicsResult] = {
@@ -37,14 +37,14 @@ case class Datagen(props: Properties) {
   }
 
   def `start-n-first`(n: Int, arena: ActorRef): Unit =
-    (0 to n).foreach(arena ! TurnOnMachine(_))
+    (1 to n).foreach(arena ! TurnOnMachine(_))
 }
 
 object Datagen extends App {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
 
-  implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats.type = DefaultFormats
 
   implicit val system: ActorSystem = ActorSystem()
 
@@ -55,11 +55,11 @@ object Datagen extends App {
   val producerSettings: ProducerSettings[String, JsonNode] =
     ProducerSettings(system, new StringSerializer(), new JsonSerializer())
 
-  val datagen = Datagen(producerSettings.properties)
+  val datagen: Datagen = Datagen(producerSettings.properties)
 
   datagen.topicCreation match {
     case Failure(t) =>
-      logger error "Fail to create the required topics!"
+      logger error("Fail to create the required topics : ", t)
       materializer.shutdown()
       system.terminate()
 
@@ -67,9 +67,9 @@ object Datagen extends App {
 
       logger info "Starting the Data Generator"
 
-      val actorProducer: ActorRef = Source.actorRef[CharacterSelection](10, OverflowStrategy.dropBuffer)
+      val actorProducer: ActorRef = Source.actorRef[CharacterSelection](10, OverflowStrategy.dropNew)
           .map(selection => asJsonNode(selection.toJson))
-          .map(node => new ProducerRecord("SELECT-SCREEN", "0", node))
+          .map(node => new ProducerRecord("CLICK-SCREEN", "0", node))
           .map(ProducerMessage.Message(_, NotUsed))
           .via(Producer.flow(producerSettings))
           .to(Sink.ignore)

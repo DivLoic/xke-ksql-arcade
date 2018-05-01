@@ -5,7 +5,7 @@ import java.time.{LocalDateTime, ZoneOffset}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import fr.xebia.ldi.ksql.datagen.Arena.{SelectScreenClick, TurnOnMachine}
 import fr.xebia.ldi.ksql.datagen.Character.Ryu
-import fr.xebia.ldi.ksql.datagen.CharacterSelection.{Human, PlayerOne}
+import fr.xebia.ldi.ksql.datagen.CharacterSelection.{Human, PlayerOne, StreetFighter}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration._
@@ -31,7 +31,7 @@ case class Machine(id: Int, actorProducer: ActorRef) extends Actor {
   }
 
   def selection(): SelectScreenClick = {
-    actorProducer ! CharacterSelection(Ryu, Human, LocalDateTime.now.toInstant(ZoneOffset.UTC).toEpochMilli, PlayerOne)
+    actorProducer ! CharacterSelection(Ryu, StreetFighter, Human, LocalDateTime.now.toInstant(ZoneOffset.UTC).toEpochMilli, PlayerOne())
     SelectScreenClick()
   }
 }
