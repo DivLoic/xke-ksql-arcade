@@ -14,11 +14,11 @@ case class CharacterSelection(character: Character, controller: Controller, time
     case _ => false
   }
 
-  def toJson: JObject = ( "character" -> character.toString) ~
-      ( "human" -> isHuman) ~
-      ( "timestamp" -> timestamp) ~
-      ( "player" -> player.toString)
-
+  def toJson: JObject =
+      ( "human" -> isHuman ) ~
+      ( "timestamp" -> timestamp ) ~
+      ( "player" -> player.toString ) ~
+      ( "character" -> character.toString )
 }
 
 object CharacterSelection {
@@ -31,7 +31,5 @@ object CharacterSelection {
   sealed trait Controller
 
   case object Human extends Controller
-  case object Machine extends Controller
-
-
+  case object Robot extends Controller
 }

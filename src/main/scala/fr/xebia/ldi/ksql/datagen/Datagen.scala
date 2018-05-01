@@ -10,7 +10,7 @@ import akka.stream.{ActorMaterializer, DelayOverflowStrategy, OverflowStrategy}
 import com.fasterxml.jackson.databind.JsonNode
 import com.typesafe.config.ConfigFactory
 import fr.xebia.ldi.ksql.datagen.Character.{Akuma, Ken, Ryu, `Chun-Li`}
-import fr.xebia.ldi.ksql.datagen.CharacterSelection.{Human, Machine, PlayerOne, PlayerTwo}
+import fr.xebia.ldi.ksql.datagen.CharacterSelection._
 import org.apache.kafka.clients.admin.{AdminClient, CreateTopicsResult, NewTopic}
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
@@ -65,7 +65,7 @@ object Datagen extends App {
         Vector(
           CharacterSelection(Ryu, Human, 0L, PlayerOne),
           CharacterSelection(Ken, Human, 0L, PlayerTwo),
-          CharacterSelection(`Chun-Li`, Machine, 0L, PlayerOne),
+          CharacterSelection(`Chun-Li`, Robot, 0L, PlayerOne),
           CharacterSelection(Akuma, Human, 0L, PlayerOne)
         ).toIterator
       })
