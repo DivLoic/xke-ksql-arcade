@@ -2,15 +2,15 @@ package fr.xebia.ldi.ksql.datagen
 
 import java.util.Properties
 
-import akka.actor.ActorSystem
-import akka.kafka.ProducerSettings
+import akka.NotUsed
+import akka.actor.{ActorRef, ActorSystem}
 import akka.kafka.scaladsl.Producer
-import akka.stream.scaladsl.Source
-import akka.stream.{ActorMaterializer, DelayOverflowStrategy, OverflowStrategy}
+import akka.kafka.{ProducerMessage, ProducerSettings}
+import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.{ActorMaterializer, OverflowStrategy}
 import com.fasterxml.jackson.databind.JsonNode
 import com.typesafe.config.ConfigFactory
-import fr.xebia.ldi.ksql.datagen.Character.{Akuma, Ken, Ryu, `Chun-Li`}
-import fr.xebia.ldi.ksql.datagen.CharacterSelection._
+import fr.xebia.ldi.ksql.datagen.Arena.TurnOnMachine
 import org.apache.kafka.clients.admin.{AdminClient, CreateTopicsResult, NewTopic}
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
@@ -19,9 +19,8 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by loicmdivad.
@@ -36,6 +35,9 @@ case class Datagen(props: Properties) {
     val client: AdminClient = AdminClient.create(props)
     Try(client.createTopics(topics.asJava))
   }
+
+  def `start-n-first`(n: Int, arena: ActorRef): Unit =
+    (0 to n).foreach(arena ! TurnOnMachine(_))
 }
 
 object Datagen extends App {
@@ -58,23 +60,24 @@ object Datagen extends App {
   datagen.topicCreation match {
     case Failure(t) =>
       logger error "Fail to create the required topics!"
+      materializer.shutdown()
+      system.terminate()
 
-    case Success(result) => logger info "Starting the Data Generator"
+    case Success(result) =>
 
-      Source.cycle(() => {
-        Vector(
-          CharacterSelection(Ryu, Human, 0L, PlayerOne),
-          CharacterSelection(Ken, Human, 0L, PlayerTwo),
-          CharacterSelection(`Chun-Li`, Robot, 0L, PlayerOne),
-          CharacterSelection(Akuma, Human, 0L, PlayerOne)
-        ).toIterator
-      })
-        .delay(1 second, DelayOverflowStrategy.backpressure)
-        .buffer(4, OverflowStrategy.backpressure)
-        .map(selection => asJsonNode(selection.toJson))
-        .map(node => new ProducerRecord("SELECTION", "0", node))
-        .runWith(Producer.plainSink(producerSettings))
+      logger info "Starting the Data Generator"
 
+      val actorProducer: ActorRef = Source.actorRef[CharacterSelection](10, OverflowStrategy.dropBuffer)
+          .map(selection => asJsonNode(selection.toJson))
+          .map(node => new ProducerRecord("SELECT-SCREEN", "0", node))
+          .map(ProducerMessage.Message(_, NotUsed))
+          .via(Producer.flow(producerSettings))
+          .to(Sink.ignore)
+          .run()
+
+      val arena: ActorRef = Arena.`with-n-Machines`(6, actorProducer)
+
+      datagen.`start-n-first`(5, arena)
   }
 
   def apply(props: Map[String, String]): Datagen = new Datagen(

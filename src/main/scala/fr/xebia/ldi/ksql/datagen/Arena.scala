@@ -24,12 +24,12 @@ object Arena {
 
   final case class SimpleMessage(content: String) extends EventMessage
   final case class TurnOnMachine(id: Int, content: String = "Ready? Fight!") extends EventMessage
+  final case class SelectScreenClick() extends EventMessage
 
   def `with-n-Machines`(n: Int, publisher: ActorRef)(implicit system: ActorSystem): ActorRef = {
 
     val machines: Map[Int, ActorRef] = (0 until n).map(i => i -> Machine.ref(i, publisher)).toMap
 
     system.actorOf(Props.apply(classOf[Arena], machines))
-
   }
 }
