@@ -1,13 +1,15 @@
 package fr.xebia.ldi.ksql.datagen
 
 import fr.xebia.ldi.ksql.datagen.CharacterSelection._
+import fr.xebia.ldi.ksql.datagen.CharactersGrid.Characters
 import org.json4s.JObject
 import org.json4s.JsonDSL._
+import org.scalacheck.{Arbitrary, Gen}
 
 /**
   * Created by loicmdivad.
   */
-case class CharacterSelection(character: Character,
+case class CharacterSelection(character: Characters,
                                game: Game, controller: Controller,
                                timestamp: Long,
                                player: Player) {
@@ -34,6 +36,8 @@ object CharacterSelection {
   final case class PlayerOne() extends Player { override def getPlayerId: Short = 1 }
   final case class PlayerTwo() extends Player { override def getPlayerId: Short = 2 }
 
+  implicit val arbitraryPad: Arbitrary[Player] = Arbitrary(Gen.frequency((5, PlayerOne()), (4, PlayerTwo())))
+
   sealed trait Controller
 
   case object Human extends Controller
@@ -47,5 +51,13 @@ object CharacterSelection {
   case object KingOfFight extends Game
   case object BudoKai extends Game
 
-
+  implicit val arbitraryGame: Arbitrary[Game] = Arbitrary(
+    Gen.frequency(
+      (60, StreetFighter),
+      (15, Takken),
+      (10, SoulCalibur),
+      (10, KingOfFight),
+      (5, BudoKai)
+    )
+  )
 }

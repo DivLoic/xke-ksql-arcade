@@ -67,7 +67,7 @@ object Datagen extends App {
 
       logger info "Starting the Data Generator"
 
-      val actorProducer: ActorRef = Source.actorRef[CharacterSelection](10, OverflowStrategy.dropNew)
+      val actorProducer: ActorRef = Source.actorRef[CharacterSelection](10, OverflowStrategy.dropBuffer)
           .map(selection => asJsonNode(selection.toJson))
           .map(node => new ProducerRecord("CLICK-SCREEN", "0", node))
           .map(ProducerMessage.Message(_, NotUsed))
