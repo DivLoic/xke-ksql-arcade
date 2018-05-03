@@ -26,7 +26,7 @@ object Arena {
   final case class TurnOnMachine(id: Int, content: String = "Ready? Fight!") extends EventMessage
   final case class SelectScreenClick() extends EventMessage
 
-  def `with-n-Machines`(n: Int, publisher: ActorRef)(implicit system: ActorSystem): ActorRef = {
+  def `with-n-machines`(n: Int, publisher: ActorRef)(implicit system: ActorSystem): ActorRef = {
 
     val machines: Map[Int, ActorRef] = (1 to n).map(i => i -> Machine.ref(i, publisher)).toMap
 

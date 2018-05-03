@@ -67,15 +67,14 @@ object Datagen extends App {
 
       logger info "Starting the Data Generator"
 
-      val actorProducer: ActorRef = Source.actorRef[CharacterSelection](10, OverflowStrategy.dropBuffer)
-          .map(selection => asJsonNode(selection.toJson))
-          .map(node => new ProducerRecord("CLICK-SCREEN", "0", node))
+      val actorProducer: ActorRef = Source.actorRef[Selection](10, OverflowStrategy.dropBuffer)
+          .map(node => new ProducerRecord("CLICK-SCREEN", node.machineId.get, asJsonNode(node.toJson)))
           .map(ProducerMessage.Message(_, NotUsed))
           .via(Producer.flow(producerSettings))
           .to(Sink.ignore)
           .run()
 
-      val arena: ActorRef = Arena.`with-n-Machines`(6, actorProducer)
+      val arena: ActorRef = Arena.`with-n-machines`(6, actorProducer)
 
       datagen.`start-n-first`(5, arena)
   }

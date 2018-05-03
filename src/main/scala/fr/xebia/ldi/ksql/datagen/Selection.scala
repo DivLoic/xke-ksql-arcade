@@ -1,6 +1,6 @@
 package fr.xebia.ldi.ksql.datagen
 
-import fr.xebia.ldi.ksql.datagen.CharacterSelection._
+import fr.xebia.ldi.ksql.datagen.Selection._
 import fr.xebia.ldi.ksql.datagen.CharactersGrid.Characters
 import org.json4s.JObject
 import org.json4s.JsonDSL._
@@ -9,10 +9,12 @@ import org.scalacheck.{Arbitrary, Gen}
 /**
   * Created by loicmdivad.
   */
-case class CharacterSelection(character: Characters,
-                               game: Game, controller: Controller,
-                               timestamp: Long,
-                               player: Player) {
+case class Selection(timestamp: Long,
+                     controller: Controller,
+                     character: Characters,
+                     player: Player,
+                     game: Game,
+                     machineId: Option[String]) {
 
   def isHuman: Boolean = controller match {
     case Human => true
@@ -27,7 +29,7 @@ case class CharacterSelection(character: Characters,
     ( "character" -> character.toString )
 }
 
-object CharacterSelection {
+object Selection {
 
   sealed trait Player {
     def getPlayerId: Short
