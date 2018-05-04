@@ -26,7 +26,7 @@ case class Selection(timestamp: Long,
     ( "human" -> isHuman ) ~
     ( "game" -> game.toString ) ~
     ( "player" -> player.getPlayerId ) ~
-    ( "character" -> character.toString )
+    ( "character" -> character.id )
 }
 
 object Selection {

@@ -11,6 +11,7 @@ import akka.stream.{ActorMaterializer, OverflowStrategy}
 import com.fasterxml.jackson.databind.JsonNode
 import com.typesafe.config.ConfigFactory
 import fr.xebia.ldi.ksql.datagen.Arena.TurnOnMachine
+import fr.xebia.ldi.ksql.datagen.CharactersGrid.allCharacters
 import org.apache.kafka.clients.admin.{AdminClient, CreateTopicsResult, NewTopic}
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
@@ -28,7 +29,8 @@ import scala.util.{Failure, Success, Try}
 case class Datagen(props: Properties) {
 
   val topics = Vector(
-    new NewTopic("CLICK-SCREEN", 6, 1)
+    new NewTopic("CLICK-SCREEN", 6, 1),
+    new NewTopic("CHARACTERS-REF", 1, 1)
   )
 
   def topicCreation: Try[CreateTopicsResult] = {
@@ -67,6 +69,15 @@ object Datagen extends App {
 
       logger info "Starting the Data Generator"
 
+      logger info "Loading fighter reference"
+
+      Source.fromIterator(() => allCharacters.toIterator).map { fighter =>
+        new ProducerRecord("CHARACTERS-REF", fighter.id.toString, asJsonNode(fighter.toJson))
+      }
+        .runWith(Producer.plainSink(producerSettings))
+
+      logger info "Loading the selection events"
+
       val actorProducer: ActorRef = Source.actorRef[Selection](10, OverflowStrategy.dropBuffer)
           .map(node => new ProducerRecord("CLICK-SCREEN", node.machineId.get, asJsonNode(node.toJson)))
           .map(ProducerMessage.Message(_, NotUsed))
@@ -74,9 +85,9 @@ object Datagen extends App {
           .to(Sink.ignore)
           .run()
 
-      val arena: ActorRef = Arena.`with-n-machines`(6, actorProducer)
+      val arena: ActorRef = Arena.`with-n-machines`(20, actorProducer)
 
-      datagen.`start-n-first`(5, arena)
+      datagen.`start-n-first`(15, arena)
   }
 
   def apply(props: Map[String, String]): Datagen = new Datagen(
