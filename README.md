@@ -1,4 +1,4 @@
-# xke-ksql-arcade :rocket:
+xke-ksql-arcade :rocket:
 ----------
 
 ### Description
