@@ -4,8 +4,8 @@ import java.time.{LocalDateTime, ZoneId, ZoneOffset}
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import fr.xebia.ldi.ksql.datagen.Arena.{SelectScreenClick, TurnOnMachine}
+import fr.xebia.ldi.ksql.datagen.CharactersGrid.{Akuma, Characters, `?`}
 import fr.xebia.ldi.ksql.datagen.Selection._
-import fr.xebia.ldi.ksql.datagen.CharactersGrid.{Characters, `?`}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
@@ -30,7 +30,8 @@ case class Machine(id: Int, actorProducer: ActorRef) extends Actor {
 
     case SelectScreenClick() =>
       logger debug s"The machine $id received a new click from the select screen"
-      context.system.scheduler.scheduleOnce(0.2 seconds, self, selection())
+      val delay: Double = Gen.choose(0.5, 2.0).sample.getOrElse(2.5)
+      context.system.scheduler.scheduleOnce(delay seconds, self, selection())
 
     case message => logger warn s"Unknown message received by the machine $id: $message"
   }
@@ -39,9 +40,7 @@ case class Machine(id: Int, actorProducer: ActorRef) extends Actor {
 
     instantGen <- Gen.const(LocalDateTime.now(zoneId).toInstant(ZoneOffset.UTC).toEpochMilli)
 
-    timestampGen <- Gen.choose(instantGen - 15000L, instantGen)
-
-    humanPlayerGen <- Gen.frequency((5, Human), (2, Robot))
+    humanPlayerGen <- Gen.frequency((5, Human), (1, Robot))
 
     playerGen <- arbitrary[Player]
 
@@ -52,6 +51,11 @@ case class Machine(id: Int, actorProducer: ActorRef) extends Actor {
     characterGen <- gameGen match {
       case StreetFighter => arbitrary[Characters]
       case _ => Gen.const(`?`)
+    }
+
+    timestampGen <- characterGen match {
+      case Akuma => Gen.choose(instantGen - 15000L, instantGen)
+      case _ => Gen.const(instantGen)
     }
 
   } yield Selection(timestampGen, humanPlayerGen, characterGen, playerGen, gameGen, machineid)

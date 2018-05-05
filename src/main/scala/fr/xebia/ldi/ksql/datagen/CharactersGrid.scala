@@ -53,12 +53,12 @@ object CharactersGrid {
 
   implicit val arbitraryCharacter: Arbitrary[Characters] = Arbitrary(
     Gen.frequency(
-      (12, Ryu),
-      (8, `Chun-Li`),
-      (8, Akuma),
-      (7, Sakura),
-      (7, Ken),
-      (7, Guile),
+      (20, Ryu),
+      (18, `Chun-Li`),
+      (16, Akuma),
+      (12, Sakura),
+      (12, Ken),
+      (10, Guile),
       (7, MrBison),
       (6, Dhalsim),
       (6, Cammy),

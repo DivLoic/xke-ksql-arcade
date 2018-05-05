@@ -29,8 +29,8 @@ import scala.util.{Failure, Success, Try}
 case class Datagen(props: Properties) {
 
   val topics = Vector(
-    new NewTopic("CLICK-SCREEN", 6, 1),
-    new NewTopic("CHARACTERS-REF", 1, 1)
+    new NewTopic("CLICKS", 6, 1),
+    new NewTopic("FIGHTERS", 1, 1)
   )
 
   def topicCreation: Try[CreateTopicsResult] = {
@@ -72,14 +72,14 @@ object Datagen extends App {
       logger info "Loading fighter reference"
 
       Source.fromIterator(() => allCharacters.toIterator).map { fighter =>
-        new ProducerRecord("CHARACTERS-REF", fighter.id.toString, asJsonNode(fighter.toJson))
+        new ProducerRecord("FIGHTERS", fighter.id.toString, asJsonNode(fighter.toJson))
       }
         .runWith(Producer.plainSink(producerSettings))
 
       logger info "Loading the selection events"
 
       val actorProducer: ActorRef = Source.actorRef[Selection](10, OverflowStrategy.dropBuffer)
-          .map(node => new ProducerRecord("CLICK-SCREEN", node.machineId.get, asJsonNode(node.toJson)))
+          .map(node => new ProducerRecord("CLICKS", node.machineId.get, asJsonNode(node.toJson)))
           .map(ProducerMessage.Message(_, NotUsed))
           .via(Producer.flow(producerSettings))
           .to(Sink.ignore)
